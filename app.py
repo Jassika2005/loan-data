@@ -96,25 +96,27 @@ if st.button("Predict Loan Default"):
     else:
         st.info("Feature importance chart not available for this model.")
 
-    # --- PDF Report ---
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
+   # --- PDF Report (Safe for Latin-1 Encoding) ---
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Prediction Result: {result}", ln=True)
+pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
+pdf.ln(10)
 
-    pdf.ln(5)
-    for key, value in input_dict.items():
-        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
+# Clean result string (remove emojis or non-latin1 chars)
+plain_result = "High Risk: Loan Likely to Default." if prediction[0] == 1 else "Low Risk: Loan Likely to be Approved."
+pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
 
-    pdf_output = "loan_prediction_report.pdf"
-    pdf.output(pdf_output)
+pdf.ln(5)
+for key, value in input_dict.items():
+    key_str = str(key)
+    value_str = str(value)
+    # Avoid characters outside Latin-1
+    pdf.cell(200, 10, txt=f"{key_str}: {value_str}", ln=True)
 
-    # Read and encode PDF to base64
-    with open(pdf_output, "rb") as f:
-        base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+# Save PDF
+pdf_output = "loan_prediction_report.pdf"
+pdf.output(pdf_output)
 
-    href = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="{pdf_output}">📥 Download PDF Report</a>'
-    st.markdown(href, unsafe_allow_html=True)
+

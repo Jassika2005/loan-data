@@ -5,119 +5,103 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from fpdf import FPDF
-import base64
+import io
 
 # Load model and scaler
 model = joblib.load("model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# App title
 st.title("🏦 Loan Default Prediction App")
 st.write("Enter applicant details to predict loan default risk.")
 
-# Input fields
+# Input widgets
 gender = st.selectbox("Gender", ["Male", "Female"])
 married = st.selectbox("Married", ["Yes", "No"])
 dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
 education = st.selectbox("Education", ["Graduate", "Not Graduate"])
 self_employed = st.selectbox("Self Employed", ["Yes", "No"])
-
-# Sliders for numeric input
-applicant_income = st.slider("Applicant Income", min_value=0, max_value=100000, step=1000)
-coapplicant_income = st.slider("Coapplicant Income", min_value=0, max_value=50000, step=500)
-loan_amount = st.slider("Loan Amount (in thousands)", min_value=0, max_value=1000, step=10)
-loan_amount_term = st.slider("Loan Amount Term (in months)", min_value=0, max_value=480, step=12)
-
+applicant_income = st.slider("Applicant Income", 0, 100000, 1000)
+coapplicant_income = st.slider("Coapplicant Income", 0, 50000, 500)
+loan_amount = st.slider("Loan Amount (in thousands)", 0, 1000, 10)
+loan_amount_term = st.slider("Loan Amount Term (in months)", 0, 480, 12)
 credit_history = st.selectbox("Credit History", ["Good (1)", "Bad (0)"])
 property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
 
-# Convert inputs to numeric codes
-gender_code = 1 if gender == "Male" else 0
-married_code = 1 if married == "Yes" else 0
-dependents_code = 3 if dependents == "3+" else int(dependents)
-education_code = 0 if education == "Graduate" else 1
-self_employed_code = 1 if self_employed == "Yes" else 0
-credit_history_code = 1 if credit_history == "Good (1)" else 0
-property_area_code = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
+# Encoding
+enc = {
+    "gender": 1 if gender=="Male" else 0,
+    "married": 1 if married=="Yes" else 0,
+    "dependents": 3 if dependents=="3+" else int(dependents),
+    "education": 0 if education=="Graduate" else 1,
+    "self_employed": 1 if self_employed=="Yes" else 0,
+    "credit_history": 1 if credit_history=="Good (1)" else 0,
+    "property_area": {"Urban":2,"Semiurban":1,"Rural":0}[property_area]
+}
 
-# Create input array
-input_data = np.array([[gender_code, married_code, dependents_code, education_code,
-                        self_employed_code, applicant_income, coapplicant_income,
-                        loan_amount, loan_amount_term, credit_history_code, property_area_code]])
+input_array = np.array([[enc["gender"], enc["married"], enc["dependents"], enc["education"],
+                         enc["self_employed"], applicant_income, coapplicant_income,
+                         loan_amount, loan_amount_term, enc["credit_history"], enc["property_area"]]])
+input_scaled = scaler.transform(input_array)
 
-# Scale numeric features
-input_scaled = scaler.transform(input_data)
-
-# Predict
 if st.button("Predict Loan Default"):
-    prediction = model.predict(input_scaled)
-    plain_result = "High Risk: Loan Likely to Default." if prediction[0] == 1 else "Low Risk: Loan Likely to be Approved."
+    prediction = model.predict(input_scaled)[0]
+    plain_result = "High Risk: Loan Likely to Default." if prediction == 1 else "Low Risk: Loan Likely to be Approved."
+    st.error("❌ "+plain_result) if prediction == 1 else st.success("✅ "+plain_result)
 
-    if prediction[0] == 1:
-        st.error("❌ " + plain_result)
-    else:
-        st.success("✅ " + plain_result)
-
-    # --- Chart 1: User Input Summary ---
+    # Input Summary chart
     st.subheader("Input Summary")
     input_dict = {
-        "Gender": gender,
-        "Married": married,
-        "Dependents": dependents,
-        "Education": education,
-        "Self Employed": self_employed,
-        "Applicant Income": applicant_income,
-        "Coapplicant Income": coapplicant_income,
-        "Loan Amount": loan_amount,
-        "Loan Term": loan_amount_term,
-        "Credit History": credit_history,
-        "Property Area": property_area
+        "Gender": gender, "Married": married, "Dependents": dependents,
+        "Education": education, "Self Employed": self_employed,
+        "Applicant Income": applicant_income, "Coapplicant Income": coapplicant_income,
+        "Loan Amount": loan_amount, "Loan Term": loan_amount_term,
+        "Credit History": credit_history, "Property Area": property_area
     }
-    input_df = pd.DataFrame(input_dict.items(), columns=["Feature", "Value"])
-    fig1, ax1 = plt.subplots(figsize=(8, 4))
-    sns.barplot(y="Feature", x="Value", data=input_df, palette="Blues_d", ax=ax1)
-    ax1.set_title("Input Feature Values")
-    st.pyplot(fig1)
+    df = pd.DataFrame(input_dict.items(), columns=["Feature","Value"])
+    fig, ax = plt.subplots(figsize=(8,4))
+    sns.barplot(y="Feature", x="Value", data=df, palette="Blues_d", ax=ax)
+    ax.set_title("Input Feature Values")
+    st.pyplot(fig)
 
-    # --- Chart 2: Feature Importance (if supported) ---
-    if hasattr(model, "feature_importances_"):
-        st.subheader("Model Feature Importances")
-        feature_names = ["Gender", "Married", "Dependents", "Education", "Self Employed",
-                         "Applicant Income", "Coapplicant Income", "Loan Amount",
-                         "Loan Term", "Credit History", "Property Area"]
-        importance_df = pd.DataFrame({
-            "Feature": feature_names,
-            "Importance": model.feature_importances_
-        }).sort_values(by="Importance", ascending=False)
-
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        sns.barplot(y="Feature", x="Importance", data=importance_df, palette="viridis", ax=ax2)
-        ax2.set_title("Model Feature Importance")
+    # Coefficient Importance chart for Logistic Regression
+    if hasattr(model, "coef_"):
+        coeffs = model.coef_[0]
+        features = ["Gender","Married","Dependents","Education","Self Employed",
+                    "Applicant Income","Coapplicant Income","Loan Amount",
+                    "Loan Term","Credit History","Property Area"]
+        coef_df = pd.DataFrame({"Feature":features, "Coefficient":coeffs}).sort_values(by="Coefficient", ascending=False)
+        st.subheader("Model Feature Coefficients (Importance)")
+        fig2, ax2 = plt.subplots(figsize=(8,5))
+        sns.barplot(y="Feature", x="Coefficient", data=coef_df, palette="coolwarm", ax=ax2)
+        ax2.set_title("Coefficient-based Feature Importance")
         st.pyplot(fig2)
     else:
-        st.info("Feature importance chart not available for this model.")
+        st.info("Coefficient information not available for this model.")
 
-    # --- Generate PDF Report ---
+    # Optional: Basic Partial Dependence Plot for Applicant Income
+    st.subheader("Partial Dependence: Applicant Income")
+    incomes = np.linspace(0, 100000, 50)
+    probs = []
+    for inc in incomes:
+        arr = input_array.copy()
+        arr[0,5] = inc
+        arr_scaled = scaler.transform(arr)
+        probs.append(model.predict_proba(arr_scaled)[0][1])
+    fig3, ax3 = plt.subplots(figsize=(6,4))
+    ax3.plot(incomes, probs, marker="o")
+    ax3.set_xlabel("Applicant Income")
+    ax3.set_ylabel("Probability of Default")
+    ax3.set_title("PDP: Effect of Income on Default Risk")
+    st.pyplot(fig3)
+
+    # PDF Report download
     pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
+    pdf.add_page(); pdf.set_font("Arial", size=12)
+    pdf.cell(200,10,txt="Loan Default Prediction Report",ln=True, align='C')
+    pdf.ln(10); pdf.cell(200,10,txt=f"Result: {plain_result}", ln=True)
     pdf.ln(5)
-    for key, value in input_dict.items():
-        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
-
-    # Save to buffer
-    import io
-    buffer = io.BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
-
-    # Download button
-    st.download_button(
-        label="📥 Download Prediction Report as PDF",
-        data=buffer,
-        file_name="loan_prediction_report.pdf",
-        mime="application/pdf"
-    )
+    for k,v in input_dict.items():
+        pdf.cell(200,8,txt=f"{k}: {v}", ln=True)
+    buf = io.BytesIO(); pdf.output(buf)
+    buf.seek(0)
+    st.download_button("Download Report as PDF", buf, "loan_report.pdf", "application/pdf")

@@ -4,6 +4,8 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from fpdf import FPDF
+import base64
 
 # Load model and scaler
 model = joblib.load("model.pkl")
@@ -49,25 +51,26 @@ input_scaled = scaler.transform(input_data)
 # Predict
 if st.button("Predict Loan Default"):
     prediction = model.predict(input_scaled)
+    result = "❌ High Risk: Loan Likely to Default." if prediction[0] == 1 else "✅ Low Risk: Loan Likely to be Approved."
     if prediction[0] == 1:
-        st.error("❌ High Risk: Loan Likely to Default.")
+        st.error(result)
     else:
-        st.success("✅ Low Risk: Loan Likely to be Approved.")
+        st.success(result)
 
     # --- Chart 1: User Input Summary ---
     st.subheader("📊 Your Input Summary")
     input_dict = {
-        "Gender": gender_code,
-        "Married": married_code,
-        "Dependents": dependents_code,
-        "Education": education_code,
-        "Self Employed": self_employed_code,
+        "Gender": gender,
+        "Married": married,
+        "Dependents": dependents,
+        "Education": education,
+        "Self Employed": self_employed,
         "Applicant Income": applicant_income,
         "Coapplicant Income": coapplicant_income,
         "Loan Amount": loan_amount,
         "Loan Term": loan_amount_term,
-        "Credit History": credit_history_code,
-        "Property Area": property_area_code
+        "Credit History": credit_history,
+        "Property Area": property_area
     }
     input_df = pd.DataFrame(input_dict.items(), columns=["Feature", "Value"])
     fig1, ax1 = plt.subplots(figsize=(8, 4))
@@ -93,3 +96,25 @@ if st.button("Predict Loan Default"):
     else:
         st.info("Feature importance chart not available for this model.")
 
+    # --- PDF Report ---
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Prediction Result: {result}", ln=True)
+
+    pdf.ln(5)
+    for key, value in input_dict.items():
+        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
+
+    pdf_output = "loan_prediction_report.pdf"
+    pdf.output(pdf_output)
+
+    # Read and encode PDF to base64
+    with open(pdf_output, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+
+    href = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="{pdf_output}">📥 Download PDF Report</a>'
+    st.markdown(href, unsafe_allow_html=True)

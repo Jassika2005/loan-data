@@ -17,10 +17,13 @@ married = st.selectbox("Married", ["Yes", "No"])
 dependents = st.selectbox("Dependents", ["0", "1", "2", "3+"])
 education = st.selectbox("Education", ["Graduate", "Not Graduate"])
 self_employed = st.selectbox("Self Employed", ["Yes", "No"])
-applicant_income = st.number_input("Applicant Income", min_value=0)
-coapplicant_income = st.number_input("Coapplicant Income", min_value=0)
-loan_amount = st.number_input("Loan Amount (in thousands)", min_value=0)
-loan_amount_term = st.number_input("Loan Amount Term (in months)", min_value=0)
+
+# Sliders for numeric input
+applicant_income = st.slider("Applicant Income", min_value=0, max_value=100000, step=1000)
+coapplicant_income = st.slider("Coapplicant Income", min_value=0, max_value=50000, step=500)
+loan_amount = st.slider("Loan Amount (in thousands)", min_value=0, max_value=1000, step=10)
+loan_amount_term = st.slider("Loan Amount Term (in months)", min_value=0, max_value=480, step=12)
+
 credit_history = st.selectbox("Credit History", ["Good (1)", "Bad (0)"])
 property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
 

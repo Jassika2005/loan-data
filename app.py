@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Load model and scaler
 model = joblib.load("model.pkl")
@@ -28,18 +30,18 @@ credit_history = st.selectbox("Credit History", ["Good (1)", "Bad (0)"])
 property_area = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
 
 # Convert inputs to numeric codes
-gender = 1 if gender == "Male" else 0
-married = 1 if married == "Yes" else 0
-dependents = 3 if dependents == "3+" else int(dependents)
-education = 0 if education == "Graduate" else 1
-self_employed = 1 if self_employed == "Yes" else 0
-credit_history = 1 if credit_history == "Good (1)" else 0
-property_area = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
+gender_code = 1 if gender == "Male" else 0
+married_code = 1 if married == "Yes" else 0
+dependents_code = 3 if dependents == "3+" else int(dependents)
+education_code = 0 if education == "Graduate" else 1
+self_employed_code = 1 if self_employed == "Yes" else 0
+credit_history_code = 1 if credit_history == "Good (1)" else 0
+property_area_code = {"Urban": 2, "Semiurban": 1, "Rural": 0}[property_area]
 
 # Create input array
-input_data = np.array([[gender, married, dependents, education,
-                        self_employed, applicant_income, coapplicant_income,
-                        loan_amount, loan_amount_term, credit_history, property_area]])
+input_data = np.array([[gender_code, married_code, dependents_code, education_code,
+                        self_employed_code, applicant_income, coapplicant_income,
+                        loan_amount, loan_amount_term, credit_history_code, property_area_code]])
 
 # Scale numeric features
 input_scaled = scaler.transform(input_data)
@@ -51,3 +53,43 @@ if st.button("Predict Loan Default"):
         st.error("❌ High Risk: Loan Likely to Default.")
     else:
         st.success("✅ Low Risk: Loan Likely to be Approved.")
+
+    # --- Chart 1: User Input Summary ---
+    st.subheader("📊 Your Input Summary")
+    input_dict = {
+        "Gender": gender_code,
+        "Married": married_code,
+        "Dependents": dependents_code,
+        "Education": education_code,
+        "Self Employed": self_employed_code,
+        "Applicant Income": applicant_income,
+        "Coapplicant Income": coapplicant_income,
+        "Loan Amount": loan_amount,
+        "Loan Term": loan_amount_term,
+        "Credit History": credit_history_code,
+        "Property Area": property_area_code
+    }
+    input_df = pd.DataFrame(input_dict.items(), columns=["Feature", "Value"])
+    fig1, ax1 = plt.subplots(figsize=(8, 4))
+    sns.barplot(y="Feature", x="Value", data=input_df, palette="Blues_d", ax=ax1)
+    ax1.set_title("Input Feature Values")
+    st.pyplot(fig1)
+
+    # --- Chart 2: Feature Importance (if supported) ---
+    if hasattr(model, "feature_importances_"):
+        st.subheader("📈 Model Feature Importances")
+        feature_names = ["Gender", "Married", "Dependents", "Education", "Self Employed",
+                         "Applicant Income", "Coapplicant Income", "Loan Amount",
+                         "Loan Term", "Credit History", "Property Area"]
+        importance_df = pd.DataFrame({
+            "Feature": feature_names,
+            "Importance": model.feature_importances_
+        }).sort_values(by="Importance", ascending=False)
+
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        sns.barplot(y="Feature", x="Importance", data=importance_df, palette="viridis", ax=ax2)
+        ax2.set_title("Model Feature Importance")
+        st.pyplot(fig2)
+    else:
+        st.info("Feature importance chart not available for this model.")
+

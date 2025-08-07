@@ -51,14 +51,15 @@ input_scaled = scaler.transform(input_data)
 # Predict
 if st.button("Predict Loan Default"):
     prediction = model.predict(input_scaled)
-    result = "❌ High Risk: Loan Likely to Default." if prediction[0] == 1 else "✅ Low Risk: Loan Likely to be Approved."
+    plain_result = "High Risk: Loan Likely to Default." if prediction[0] == 1 else "Low Risk: Loan Likely to be Approved."
+
     if prediction[0] == 1:
-        st.error(result)
+        st.error("❌ " + plain_result)
     else:
-        st.success(result)
+        st.success("✅ " + plain_result)
 
     # --- Chart 1: User Input Summary ---
-    st.subheader("📊 Your Input Summary")
+    st.subheader("Input Summary")
     input_dict = {
         "Gender": gender,
         "Married": married,
@@ -80,7 +81,7 @@ if st.button("Predict Loan Default"):
 
     # --- Chart 2: Feature Importance (if supported) ---
     if hasattr(model, "feature_importances_"):
-        st.subheader("📈 Model Feature Importances")
+        st.subheader("Model Feature Importances")
         feature_names = ["Gender", "Married", "Dependents", "Education", "Self Employed",
                          "Applicant Income", "Coapplicant Income", "Loan Amount",
                          "Loan Term", "Credit History", "Property Area"]
@@ -96,27 +97,27 @@ if st.button("Predict Loan Default"):
     else:
         st.info("Feature importance chart not available for this model.")
 
-   # --- PDF Report (Safe for Latin-1 Encoding) ---
-pdf = FPDF()
-pdf.add_page()
-pdf.set_font("Arial", size=12)
+    # --- Generate PDF Report ---
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
+    pdf.ln(5)
+    for key, value in input_dict.items():
+        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
 
-pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
-pdf.ln(10)
+    # Save to buffer
+    import io
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
 
-# Clean result string (remove emojis or non-latin1 chars)
-plain_result = "High Risk: Loan Likely to Default." if prediction[0] == 1 else "Low Risk: Loan Likely to be Approved."
-pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
-
-pdf.ln(5)
-for key, value in input_dict.items():
-    key_str = str(key)
-    value_str = str(value)
-    # Avoid characters outside Latin-1
-    pdf.cell(200, 10, txt=f"{key_str}: {value_str}", ln=True)
-
-# Save PDF
-pdf_output = "loan_prediction_report.pdf"
-pdf.output(pdf_output)
-
-
+    # Download button
+    st.download_button(
+        label="📥 Download Prediction Report as PDF",
+        data=buffer,
+        file_name="loan_prediction_report.pdf",
+        mime="application/pdf"
+    )

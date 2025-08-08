@@ -51,74 +51,36 @@ if st.button("Predict Loan Default"):
     else:
         st.success("✅ Low Risk: Loan Likely to be Approved.")
 
-    # -- Chart 1: Input Summary
-    st.subheader("📊 Input Summary")
-    input_dict = {
-        "Gender": gender,
-        "Married": married,
-        "Dependents": dependents,
-        "Education": education,
-        "Self Employed": self_employed,
-        "Applicant Income": applicant_income,
-        "Coapplicant Income": coapplicant_income,
-        "Loan Amount": loan_amount,
-        "Loan Term": loan_amount_term,
-        "Credit History": credit_history,
-        "Property Area": property_area
-    }
+   # --- Chart 1: Input Summary ---
+st.subheader("📊 Input Summary")
 
-    input_df = pd.DataFrame(input_dict.items(), columns=["Feature", "Value"])
-    fig1, ax1 = plt.subplots(figsize=(8, 5))
-    sns.barplot(y="Feature", x="Value", data=input_df, ax=ax1, palette="Blues_d")
-    ax1.set_title("Input Feature Values")
-    st.pyplot(fig1)
+# Separate numeric and categorical features
+numeric_features = {
+    "Applicant Income": applicant_income,
+    "Coapplicant Income": coapplicant_income,
+    "Loan Amount (in thousands)": loan_amount,
+    "Loan Term (months)": loan_amount_term
+}
 
-    # -- Chart 2: Feature Importance (works for tree-based or logistic models)
-    st.subheader("📈 Model Feature Importance")
-    feature_names = ["Gender", "Married", "Dependents", "Education", "Self Employed",
-                     "Applicant Income", "Coapplicant Income", "Loan Amount",
-                     "Loan Term", "Credit History", "Property Area"]
+categorical_features = {
+    "Gender": gender,
+    "Married": married,
+    "Dependents": dependents,
+    "Education": education,
+    "Self Employed": self_employed,
+    "Credit History": credit_history,
+    "Property Area": property_area
+}
 
-    if hasattr(model, "feature_importances_"):
-        # For RandomForest, DecisionTree, etc.
-        importance = model.feature_importances_
-        importance_df = pd.DataFrame({"Feature": feature_names, "Importance": importance})
-        importance_df = importance_df.sort_values(by="Importance", ascending=False)
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        sns.barplot(y="Feature", x="Importance", data=importance_df, palette="viridis", ax=ax2)
-        ax2.set_title("Feature Importance (Tree-based Model)")
-        st.pyplot(fig2)
+# Display categorical inputs as table
+st.markdown("#### Categorical Inputs")
+st.table(pd.DataFrame(categorical_features.items(), columns=["Feature", "Value"]))
 
-    elif hasattr(model, "coef_"):
-        # For Logistic Regression
-        importance = model.coef_[0]
-        importance_df = pd.DataFrame({"Feature": feature_names, "Importance": importance})
-        importance_df = importance_df.sort_values(by="Importance", ascending=False)
-        fig3, ax3 = plt.subplots(figsize=(8, 5))
-        sns.barplot(y="Feature", x="Importance", data=importance_df, palette="coolwarm", ax=ax3)
-        ax3.set_title("Feature Coefficients (Logistic Regression)")
-        st.pyplot(fig3)
+# Display numeric inputs as bar chart
+st.markdown("#### Numeric Inputs")
+num_df = pd.DataFrame(numeric_features.items(), columns=["Feature", "Value"])
+fig_num, ax_num = plt.subplots(figsize=(8, 4))
+sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
+ax_num.set_title("Numeric Input Feature Values")
+st.pyplot(fig_num)
 
-    else:
-        st.info("❗ This model does not support feature importance visualization.")
-
-    # -- Optional: PDP for Applicant Income
-    st.subheader("📉 Income vs. Default Risk")
-    incomes = np.linspace(0, 100000, 50)
-    probs = []
-    for inc in incomes:
-        temp = input_data.copy()
-        temp[0, 5] = inc  # change applicant income
-        temp_scaled = scaler.transform(temp)
-        try:
-            prob = model.predict_proba(temp_scaled)[0][1]
-        except:
-            prob = model.predict(temp_scaled)[0]
-        probs.append(prob)
-
-    fig4, ax4 = plt.subplots()
-    ax4.plot(incomes, probs, color="purple", marker="o")
-    ax4.set_title("Partial Dependence: Applicant Income")
-    ax4.set_xlabel("Applicant Income")
-    ax4.set_ylabel("Predicted Risk")
-    st.pyplot(fig4)

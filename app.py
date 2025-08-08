@@ -84,6 +84,7 @@ if st.button("Predict Loan Default"):
     sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
     ax_num.set_title("Numeric Input Feature Values")
     st.pyplot(fig_num)
+input_dict = {**categorical_features, **numeric_features}
 
    # --- Generate PDF Report ---
     pdf = FPDF()
@@ -109,3 +110,4 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+

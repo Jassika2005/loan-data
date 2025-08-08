@@ -72,6 +72,9 @@ if st.button("Predict Loan Default"):
         "Property Area": property_area
     }
 
+    # Combine for report
+    input_dict = {**categorical_features, **numeric_features}
+
     # Show inputs
     st.subheader("📊 Input Summary")
 
@@ -84,9 +87,8 @@ if st.button("Predict Loan Default"):
     sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
     ax_num.set_title("Numeric Input Feature Values")
     st.pyplot(fig_num)
-input_dict = {**categorical_features, **numeric_features}
 
-   # --- Generate PDF Report ---
+    # --- Generate PDF Report ---
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -94,14 +96,13 @@ input_dict = {**categorical_features, **numeric_features}
     pdf.ln(10)
     pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
     pdf.ln(5)
+
     for key, value in input_dict.items():
         pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
 
-    # Save to buffer
-    import io
-    buffer = io.BytesIO()
-    pdf.output(buffer)
-    buffer.seek(0)
+    # Save PDF to buffer
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    buffer = io.BytesIO(pdf_bytes)
 
     # Download button
     st.download_button(
@@ -110,4 +111,3 @@ input_dict = {**categorical_features, **numeric_features}
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
-

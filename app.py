@@ -85,37 +85,19 @@ if st.button("Predict Loan Default"):
     ax_num.set_title("Numeric Input Feature Values")
     st.pyplot(fig_num)
 
-    # --- Generate PDF Report ---
+   # --- Generate PDF Report ---
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.set_text_color(0, 0, 0)
-
-    # Title
-    pdf.set_font("Arial", 'B', 16)
     pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
     pdf.ln(10)
-
-    # Result
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt=f"Prediction: {plain_result}", ln=True)
+    pdf.cell(200, 10, txt=f"Prediction Result: {plain_result}", ln=True)
     pdf.ln(5)
-
-    # Input fields
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="Categorical Inputs:", ln=True)
-    pdf.set_font("Arial", size=12)
-    for key, value in categorical_features.items():
+    for key, value in input_dict.items():
         pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
 
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="Numeric Inputs:", ln=True)
-    pdf.set_font("Arial", size=12)
-    for key, value in numeric_features.items():
-        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
-
-    # Create buffer
+    # Save to buffer
+    import io
     buffer = io.BytesIO()
     pdf.output(buffer)
     buffer.seek(0)

@@ -83,16 +83,4 @@ fig_num, ax_num = plt.subplots(figsize=(8, 4))
 sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
 ax_num.set_title("Numeric Input Feature Values")
 st.pyplot(fig_num)
- # PDF Report download
-    pdf = FPDF()
-    pdf.add_page(); pdf.set_font("Arial", size=12)
-    pdf.cell(200,10,txt="Loan Default Prediction Report",ln=True, align='C')
-    pdf.ln(10); pdf.cell(200,10,txt=f"Result: {plain_result}", ln=True)
-    pdf.ln(5)
-    for k,v in input_dict.items():
-        pdf.cell(200,8,txt=f"{k}: {v}", ln=True)
-    buf = io.BytesIO(); pdf.output(buf)
-    buf.seek(0)
-    st.download_button("Download Report as PDF", buf, "loan_report.pdf", "application/pdf")
-
-
+ 

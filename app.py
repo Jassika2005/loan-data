@@ -4,6 +4,8 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from fpdf import FPDF
+import io
 
 # Load model and scaler
 model = joblib.load("model.pkl")
@@ -46,41 +48,82 @@ input_scaled = scaler.transform(input_data)
 # Predict and display results
 if st.button("Predict Loan Default"):
     prediction = model.predict(input_scaled)
-    if prediction[0] == 1:
-        st.error("❌ High Risk: Loan Likely to Default.")
-    else:
-        st.success("✅ Low Risk: Loan Likely to be Approved.")
+    result = "❌ High Risk: Loan Likely to Default." if prediction[0] == 1 else "✅ Low Risk: Loan Likely to be Approved."
+    plain_result = "High Risk" if prediction[0] == 1 else "Low Risk"
 
-   # --- Chart 1: Input Summary ---
-st.subheader("📊 Input Summary")
+    st.subheader("🔍 Prediction Result")
+    st.write(result)
 
-# Separate numeric and categorical features
-numeric_features = {
-    "Applicant Income": applicant_income,
-    "Coapplicant Income": coapplicant_income,
-    "Loan Amount (in thousands)": loan_amount,
-    "Loan Term (months)": loan_amount_term
-}
+    # Input summaries
+    numeric_features = {
+        "Applicant Income": applicant_income,
+        "Coapplicant Income": coapplicant_income,
+        "Loan Amount (in thousands)": loan_amount,
+        "Loan Term (months)": loan_amount_term
+    }
 
-categorical_features = {
-    "Gender": gender,
-    "Married": married,
-    "Dependents": dependents,
-    "Education": education,
-    "Self Employed": self_employed,
-    "Credit History": credit_history,
-    "Property Area": property_area
-}
+    categorical_features = {
+        "Gender": gender,
+        "Married": married,
+        "Dependents": dependents,
+        "Education": education,
+        "Self Employed": self_employed,
+        "Credit History": credit_history,
+        "Property Area": property_area
+    }
 
-# Display categorical inputs as table
-st.markdown("#### Categorical Inputs")
-st.table(pd.DataFrame(categorical_features.items(), columns=["Feature", "Value"]))
+    # Show inputs
+    st.subheader("📊 Input Summary")
 
-# Display numeric inputs as bar chart
-st.markdown("#### Numeric Inputs")
-num_df = pd.DataFrame(numeric_features.items(), columns=["Feature", "Value"])
-fig_num, ax_num = plt.subplots(figsize=(8, 4))
-sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
-ax_num.set_title("Numeric Input Feature Values")
-st.pyplot(fig_num)
- 
+    st.markdown("#### Categorical Inputs")
+    st.table(pd.DataFrame(categorical_features.items(), columns=["Feature", "Value"]))
+
+    st.markdown("#### Numeric Inputs")
+    num_df = pd.DataFrame(numeric_features.items(), columns=["Feature", "Value"])
+    fig_num, ax_num = plt.subplots(figsize=(8, 4))
+    sns.barplot(y="Feature", x="Value", data=num_df, ax=ax_num, palette="Blues_d")
+    ax_num.set_title("Numeric Input Feature Values")
+    st.pyplot(fig_num)
+
+    # --- Generate PDF Report ---
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.set_text_color(0, 0, 0)
+
+    # Title
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="Loan Default Prediction Report", ln=True, align='C')
+    pdf.ln(10)
+
+    # Result
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt=f"Prediction: {plain_result}", ln=True)
+    pdf.ln(5)
+
+    # Input fields
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="Categorical Inputs:", ln=True)
+    pdf.set_font("Arial", size=12)
+    for key, value in categorical_features.items():
+        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="Numeric Inputs:", ln=True)
+    pdf.set_font("Arial", size=12)
+    for key, value in numeric_features.items():
+        pdf.cell(200, 10, txt=f"{key}: {value}", ln=True)
+
+    # Create buffer
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+
+    # Download button
+    st.download_button(
+        label="📥 Download Prediction Report as PDF",
+        data=buffer,
+        file_name="loan_prediction_report.pdf",
+        mime="application/pdf"
+    )

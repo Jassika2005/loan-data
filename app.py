@@ -7,17 +7,17 @@ import seaborn as sns
 from fpdf import FPDF
 import io
 
-# Inject background image via CSS
+# ✅ Add your GitHub RAW image link below
 st.markdown(
-    f"""
+    """
     <style>
-    .stApp {{
-        background-image: url("Image.avif");
+    .stApp {
+        background-image: url("https://raw.githubusercontent.com/your-username/your-repo-name/main/Image.avif");
         background-attachment: fixed;
         background-size: cover;
         background-repeat: no-repeat;
         background-position: center;
-    }}
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -28,7 +28,8 @@ model = joblib.load("model.pkl")
 scaler = joblib.load("scaler.pkl")
 
 st.title("🏦 Loan Default Prediction App")
-...
+st.write("Enter applicant details to predict loan default risk.")
+
 
 # Load model and scaler
 model = joblib.load("model.pkl")
@@ -134,6 +135,7 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
 
 
 

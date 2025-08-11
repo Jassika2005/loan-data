@@ -27,14 +27,6 @@ st.markdown(
 model = joblib.load("model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-st.title("🏦 Loan Default Prediction App")
-st.write("Enter applicant details to predict loan default risk.")
-
-
-# Load model and scaler
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
-
 # App title
 st.title("🏦 Loan Default Prediction App")
 st.write("Enter applicant details to predict loan default risk.")
@@ -135,6 +127,7 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
 
 
 

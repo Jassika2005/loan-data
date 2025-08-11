@@ -12,7 +12,7 @@ st.markdown(
     f"""
     <style>
     .stApp {{
-        background-image: url("https://raw.githubusercontent.com/your-username/your-repo-name/main/background.jpg");
+        background-image: url("dark-hexagonal-background-with-gradient-color_79603-1409 .avif");
         background-attachment: fixed;
         background-size: cover;
         background-repeat: no-repeat;
@@ -134,5 +134,6 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
 
 

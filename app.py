@@ -12,7 +12,7 @@ st.markdown(
     f"""
     <style>
     .stApp {{
-        background-image: url("dark-hexagonal-background-with-gradient-color_79603-1409 .avif");
+        background-image: url("https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.freepik.com%2Ffree-photos-vectors%2Fscreen-background&psig=AOvVaw2ZkwdqufDiIBaVesqeESWY&ust=1754973165587000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCLCZ8Nb2gY8DFQAAAAAdAAAAABAE.avif");
         background-attachment: fixed;
         background-size: cover;
         background-repeat: no-repeat;
@@ -134,6 +134,7 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
 
 
 

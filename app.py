@@ -6,14 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from fpdf import FPDF
 import io
-import streamlit as st
-import pandas as pd
-import numpy as np
-import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
-from fpdf import FPDF
-import io
 
 # Inject background image via CSS
 st.markdown(
@@ -142,4 +134,5 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
 

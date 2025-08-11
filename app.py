@@ -6,6 +6,37 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from fpdf import FPDF
 import io
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+from fpdf import FPDF
+import io
+
+# Inject background image via CSS
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("https://raw.githubusercontent.com/your-username/your-repo-name/main/background.jpg");
+        background-attachment: fixed;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Load model and scaler
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
+
+st.title("🏦 Loan Default Prediction App")
+...
 
 # Load model and scaler
 model = joblib.load("model.pkl")
@@ -111,3 +142,4 @@ if st.button("Predict Loan Default"):
         file_name="loan_prediction_report.pdf",
         mime="application/pdf"
     )
+
